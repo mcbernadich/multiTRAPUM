@@ -1,6 +1,7 @@
 # TRAPUM_multibeam_rfi
 
 This is the current working version that I'm using to create masks for the MLGPS survey. As such some things are hard-codded and some others are accomodated to work in the environtment where I run it. Eventually, a more general version of the code will go to the ```main``` branch.
+UPDATE: the ```main``` branch is now out. Use that one if your surey is any other than MLGPS!
 
 ## Usage
 
