@@ -1,0 +1,15 @@
+# general parameters
+path: 
+pointing_list:
+rfifind_beams:
+birdies_beams:
+chop_samples:
+# rfifind parameters
+ncpus:
+time:
+timesig:
+freqsig:
+chanfrac:
+intfrac:
+
+

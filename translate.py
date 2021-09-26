@@ -1,6 +1,9 @@
 import sys
 read_file=open(sys.argv[1],"r")
 chans = read_file.readline()
+middle = float(sys.argv[2])
+bottom= float(sys.argv[2])-float(sys.argv[3])
+nchan = int(sys.argv[4])
 
 def chans_to_freqs(chans, flo, bw, nchans):
     out = []
@@ -18,5 +21,5 @@ def chans_to_freqs(chans, flo, bw, nchans):
             continue
     return ",".join(out)
 
-mhz_list = chans_to_freqs(chans, 855.9, 856, 2048)
+mhz_list = chans_to_freqs(chans, bottom, middle, nchan)
 print(mhz_list)

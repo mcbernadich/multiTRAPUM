@@ -24,7 +24,7 @@ def count_channels(mask):
     line=read_file.readline()
     line=read_file.readline()
     line=line.split(" ")[0]
-    print(pointing+": "+str(100*total/2048)+" fc, "+line+" Fb.")
+    print(pointing+": "+str(100*total/2048)+"% frequency channels, "+line+" Fourier bins.")
     return total
 
 files = sorted(glob.glob(str(sys.argv[1])))

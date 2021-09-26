@@ -1,35 +1,112 @@
 #!/bin/bash
-#Get the directory of the pointigns.
-path=$1
-#Get a range of the pontings that you desire to run through. If it is all of them, just write "all". Otherwise, "first,last", starting from 0.
-range=$2
-#Collect the pointings
-pointings=$(ls ${path})
-if [ $range = "all" ]; then
-    pointing_list=${pointings}
-else
-    IFS=',' read -a ra <<< $range
-    low=$[${ra[0]}*16+1]
-    high=$[${ra[1]}*16+15]
-    pointing_list=$(echo ${pointings[@]} | cut -c${low}-${high})
-fi
+
+#Set the singularty image paths:
+sing_presto=/beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg
+sing_sigproc=/beegfs/u/mcbernadich/simages/ProtoSearch_SIGPROC_v5.sif
+sing_sigpyproc=/beegfs/u/mcbernadich/simages/peasoup_cuda10.2.sigm
+
 echo ""
 echo "|------------------------------------------------------------------------------------|"
-echo "|-----Multi-beam channel mask producer, with rfifind and sigpyproc.------------------|"
+echo "|-----Multi-beam channel mask producer using singularity, presto, sigproc and--------|"
+echo "|-----sigpyproc.---------------------------------------------------------------------|"
 echo "|-----Using getout_rfifind.py from P. Padmanabh and parts of rfifind_getout----------|"
 echo "|-----from V. Balakrishnan and M. Cruces, version 15.10.19 .-------------------------|"
 echo "|------------------------------------------------------------------------------------|"
 echo ""
 echo "Pointings ${pointing_list} found in ${path}"
-rm *.chop
-rm *.fil
-rm headers.txt
-rm intervals.ascii
-rm zappingList.sql
+
+#Parse the arguments fromt the arguments.txt file.
+# It may seem redundant, but it is better this way than to write all of the arguments on a command screen.
+# General arguments (path, pointing_list, rfifind_beams, birdies_beams and chop_samples) need to be set. Otherwise the code won't run.
+# rfifind arguments (ncpus, time, timesig, freqsig, chanfrac and intfrac) will be the default ones unless specified.
+# specific data parameters (band_bottom, band_middle, nchan, tsample) will be read from the header of files unless specified.
+while IFS= read -r line; do
+	IFS=": " read -a args <<< $line
+	if [ ${line[0]} = "path" ]; then
+		path=${line[1]}
+	else if [ ${line[0]} = "pointing_list" ]; then
+		pointing_list=${line[1]}
+	else if [ ${rfifind_beams[0]} = "rfifind_beams" ]; then
+		rfifind_beams=${line[1]}
+	else if [ ${rfifind_beams[0]} = "birdies_beams" ]; then
+		birdies_beams=${line[1]}
+	else if [ ${rfifind_beams[0]} = "chop_samples" ]; then
+		samples=${line[1]}
+	else if [ ${rfifind_beams[0]} = "ncpus" ]; then
+		ncpus=${line[1]}
+	else if [ ${rfifind_beams[0]} = "time" ]; then
+		time=${line[1]}
+	else if [ ${rfifind_beams[0]} = "timesig" ]; then
+		timesig=${line[1]}
+	else if [ ${rfifind_beams[0]} = "freqsig" ]; then
+		freqsig=${line[1]}
+	else if [ ${rfifind_beams[0]} = "chanfrac" ]; then
+		chanfrac=${line[1]}
+	else if [ ${rfifind_beams[0]} = "intfrac" ]; then
+		intfrac=${line[1]}
+done < arguments.txt
+
+#Check which variables have been set
+if test $path; then
+	echo "Masking pointings in ${path}"
+else
+	echo "Please specify path in arguments.txt"
+	exit 1
+fi
+if [ [ test $pointing_list ] and [ $pointing_list = "all" ] ]; then
+	echo "All of the pointings in this path will be masked."
+	pointing_list=$(ls ${path})
+else if test $pointing_list; then
+	IFS=" " rad -a pointing_list <<< ${pointing_list}
+	echo "Pointings to be masked: ${pointing_list[@]}"
+else 
+	echo "Please specify pointin_list in arguments.txt"
+	exit 1
+fi
+if test $rfifind_beams; then
+	echo "Pointings to be chopped and sent to rfifind: ${rfifind_beams}"
+else
+	echo "Please specify the beams to be chopped and un through rfifind in arguments.txt"
+	exit 1
+fi
+if test $birdies_beams; then
+	echo "Beams for the multibeam birdies: ${rfifind_beams}"
+else
+	echo "Please specify the multibeam birdies beams in arguments.txt"
+	exit 1
+fi
+if test $samples; then
+	echo "Beams will be chopped every ${samples} samples."
+else
+	echo "Please specify the chopping_samples in arguments.txt"
+fi
+if [ [ test $ncpus ] = False ]; then
+	ncpus=1
+fi
+if [ [ test $time ] = False ]; then
+	time=30
+fi
+if [ [ test $timesig ] = False ]; then
+	timesig=10
+fi
+if [ [ test $freqsig ] = False ]; then
+	time=4
+fi
+if [ [ test $chanfrac ] = False ]; then
+	chanfrac=0.7
+fi
+if [ [ test $intfrac ] = False ]; then
+	intfrac=0.3
+fi
+
 #Loop over the pointings.
-for pointing in ${pointing_list}; do
+for pointing in ${pointing_list[@]}; do
 	name=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta boresight)
 	utc_start=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta utc_start)
+	centre_frequency=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta centre_frequency)
+	bandwidth=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta bandwidth)
+	ncahns=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta coherent_nchans)
+	tsamp=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta coherent_tsamp)
 	echo ""
 	echo ""
 	echo ""
@@ -40,9 +117,9 @@ for pointing in ${pointing_list}; do
 	echo "Setting up script to run the fourier transforms in the bakground."
 	mkdir ${name}_Fourier
 	echo "#!/bin/bash" > ${name}_Fourier/birdies_script.sh
-	echo "IFS=' ' read -a beams <<< '000 476 025 461'" >> ${name}_Fourier/birdies_script.sh
+	echo "IFS=' ' read -a beams <<< '${birdies_beams}'" >> ${name}_Fourier/birdies_script.sh
 	echo 'for beam in ${beams[@]}; do' >> ${name}_Fourier/birdies_script.sh
-	echo '	singularity exec -B /:/data:ro //beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg bash ../fourier0dm.sh /data'${path}'/'${pointing}'/cfbf00${beam} '${name}'_cfbf00${beam} > '${name}'_cfbf00${beam}_logs.txt' >> ${name}_Fourier/birdies_script.sh
+	echo '	singularity exec -B /:/data:ro ${sing_presto} bash ../fourier0dm.sh /data'${path}'/'${pointing}'/${beam} '${name}'_${beam} > '${name}'_${beam}_logs.txt' >> ${name}_Fourier/birdies_script.sh
 	echo "done" >> ${name}_Fourier/birdies_script.sh
 	echo 'Moving to '${name}'_Fourier .'
 	cd ${name}_Fourier
@@ -51,19 +128,19 @@ for pointing in ${pointing_list}; do
 	echo 'Going back to main directory.'
 	cd ..
 	#Loop over the two halves of an observation.
-	for half in $(seq 0 1); do
+	for half in $(seq -w 0 ${nfiles}); do
 		echo ""
 		echo ""
-		echo "Working on the ${half}-th half of pointing ${pointing}"
+		echo "Working on the ${half}-th part of pointing ${pointing}"
 		#Record the satring time, and sample size of every beam and write them in headers.txt
-		IFS=' ' read -a beams <<< "000 476 460 026 025 475 461"
+		IFS=' ' read -a beams <<< "${rfifind beams}"
 		echo ""
 		echo ""
 		echo "Reading the headers of beams ${beams[@]}"
 		for beam in ${beams[@]}; do
 			echo ""
-			echo "Working on beam cfbf00${beam}"
-			singularity exec -B /:/data:ro /beegfs/u/mcbernadich/simages/ProtoSearch_SIGPROC_v5.sif bash readHeader.sh /data${path}/${pointing}/cfbf00${beam} $half
+			echo "Working on beam ${beam}"
+			singularity exec -B /:/data:ro ${sing_sigproc} bash readHeader.sh /data${path}/${pointing}/${beam} $half
 		done
 		#Read headers.txt to establish the first and last sample for each beam and write it into intervals.ascii.
 		echo ""
@@ -76,13 +153,13 @@ for pointing in ${pointing_list}; do
 		echo ""
 		echo ""
 		echo "Chopping the files from beams ${beams[@]}"
-		IFS=' ' read -a index <<< "1 2 3 4 5 6 7"
+		index=$(seq -w 1 ${#beams[@]})
 		i=0
 		while IFS= read -r line; do
 			IFS=' ' read -a args <<< $line
 			echo ""
 			echo "Working on beam ${args[0]}"
-			singularity exec -B /:/data:ro /beegfs/u/mcbernadich/simages/peasoup_cuda10.2.sigm bash chopCall.sh /data${path}/${pointing}/${args[0]} 32768 ${args[1]} ${args[2]} 7 ${index[${i}]} $half
+			singularity exec -B /:/data:ro ${sing_sigpyproc} bash chopCall.sh /data${path}/${pointing}/${args[0]} ${samples} ${args[1]} ${args[2]} ${#beams[@]} ${index[${i}]} $half
 			i=$[${i}+1]
 		done < intervals.ascii
 		rm intervals.ascii
@@ -91,15 +168,15 @@ for pointing in ${pointing_list}; do
 	echo ""
 	echo ""
 	echo "Creating the multichannel mask for the observation. rfifind logs will be written at "${name}"_multibeam_rfifind_run.txt"
-	singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg rfifind -ncpus 8 -time 6 -freqsig 4 -intfrac 0.1 -o ${name}_multibeam -filterbank *.chop > ${name}_multibeam_rfifind_run.txt
+	singularity exec -B /:/data:ro ${sing_presto} rfifind -ncpus ${ncpus} -time ${time} -timesig ${timesig} -freqsig ${freqsig} -intfrac ${intfrac} -chanfrac {chanfrac} -o ${name}_multibeam -filterbank *.chop > ${name}_multibeam_rfifind_run.txt
 	rm *.chop
 	#Translate the masks into a frequency range.
 	echo ""
 	echo ""
 	echo "Translating the mask into a format readable by peasoup."
-	singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg python rfifind_stats_noplot.py ${name}_multibeam_rfifind.stats
-	singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg weights_to_ignorechan.py ${name}_multibeam_rfifind.weights > ${name}_multibeam_rfifind_zap_channels.ascii
-	frequencies=$(python3 translate.py ${name}_multibeam_rfifind_zap_channels.ascii) #Add arguments here to modify the bandwith
+	singularity exec -B /:/data:ro ${sing_presto} python rfifind_stats_noplot.py ${name}_multibeam_rfifind.stats
+	singularity exec -B /:/data:ro ${sing_presto} weights_to_ignorechan.py ${name}_multibeam_rfifind.weights > ${name}_multibeam_rfifind_zap_channels.ascii
+	frequencies=$(python3 translate.py ${name}_multibeam_rfifind_zap_channels.ascii ${centre_frequency} ${bandwidth} ${nchan}) #Add arguments here to modify the bandwith
 	echo ${frequencies} > ${name}_multibeam_rfifind_zap_frequencies.ascii
 	echo ""
 	echo ""
@@ -127,7 +204,7 @@ for pointing in ${pointing_list}; do
 	echo ""
 	echo "Translating the frequencies and birdies into a format readable by peasoup."
 	rfifind_birdies=$(python3 readBirdies.py ${name}_multibeam_rfifind.birdies)
-	multibeam_birdies=$(python3 zapFourier.py ${name} "${name}_Fourier/*_0dm_time_series_red.fft" 0.00015312149)
+	multibeam_birdies=$(python3 zapFourier.py ${name} "${name}_Fourier/*_0dm_time_series_red.fft" ${tsamp})
 	#Write it all into a sql script.
 	echo 'INSERT INTO rfi_masks (utc, frequency_mask, birdie_list) VALUE ("'${utc_start}'", "'${frequencies}'", "1.65925:0.002,3.31785:0.002,6.6357:0.002,5.55556:0.002,11.1111:0.002,'${rfifind_birdies}','${multibeam_birdies}'");' >> zappingList.sql
 	echo ""
