@@ -99,7 +99,7 @@ for pointing in ${pointing_list}; do
 	echo "Translating the mask into a format readable by peasoup."
 	singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg python rfifind_stats_noplot.py ${name}_multibeam_rfifind.stats
 	singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg weights_to_ignorechan.py ${name}_multibeam_rfifind.weights > ${name}_multibeam_rfifind_zap_channels.ascii
-	frequencies=$(python3 translate.py ${name}_multibeam_rfifind_zap_channels.ascii)
+	frequencies=$(python3 translate.py ${name}_multibeam_rfifind_zap_channels.ascii) #Add arguments here to modify the bandwith
 	echo ${frequencies} > ${name}_multibeam_rfifind_zap_frequencies.ascii
 	echo ""
 	echo ""

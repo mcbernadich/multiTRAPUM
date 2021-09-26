@@ -23,11 +23,11 @@ def zap_birdies(frequency_series,birdies_file):
 	file.close()
 	return birdies_mask
 
-fourier_series_dered=np.square(np.absolute(np.fromfile("MSGPS_L_1744_cfbf00000_0dm_time_series_red.fft",dtype="float32")))
+fourier_series_dered=np.square(np.absolute(np.fromfile("SextansA_cfbf00005_0dm_time_series_red.fft",dtype="float32")))
 fourier_size=fourier_series_dered.size
 fourier_series_dered=fourier_series_dered[:fourier_size//2]
 frequency_series=np.fft.fftfreq(fourier_size, 2 * 16 * 4096 / 856e6)[:fourier_size//2]
-birdies_mask=zap_birdies(frequency_series,"MSGPS_L_1744_multibeam_birdies_logs.txt")
+birdies_mask=zap_birdies(frequency_series,"SextansA_multibeam_birdies_logs.txt")
 print(np.mean(fourier_series_dered))
 print(np.std(fourier_series_dered))
 

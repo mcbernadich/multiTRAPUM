@@ -9,10 +9,10 @@ def chans_to_freqs(chans, flo, bw, nchans):
         s = list(map(float, pair.split(":")))
         if len(s) == 1:
             chan = s[0]
-            out.append("{}:{}".format(flo + chbw * (chan), flo + chbw * chan+0.5))
+            out.append("{}:{}".format(flo + chbw * (chan-0.5), flo + chbw * (chan+1.5)))
         elif len(s) == 2:
             chan0, chan1 = s
-            out.append("{}:{}".format(flo + chbw * (chan0), flo + chbw * chan1+0.5))
+            out.append("{}:{}".format(flo + chbw * (chan0-0.5), flo + chbw * (chan1+0.5)))
         else:
             print("Unknown format: {}".format(pair))
             continue
