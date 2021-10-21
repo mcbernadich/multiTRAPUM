@@ -82,6 +82,7 @@ for pointing in ${pointing_list}; do
 			IFS=' ' read -a args <<< $line
 			echo ""
 			echo "Working on beam ${args[0]}"
+			singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/fbfhn01.mpifr-be.mkat.karoo.kat.ac.za_7000_trapum_search:cuda10.2-20211008-2021-10-08-0326eec5797c.simg bash deRed.sh /data${path}/${pointing}/${args[0]} $half
 			singularity exec -B /:/data:ro /beegfs/u/mcbernadich/simages/peasoup_cuda10.2.sigm bash chopCall.sh /data${path}/${pointing}/${args[0]} 32768 ${args[1]} ${args[2]} 7 ${index[${i}]} $half
 			i=$[${i}+1]
 		done < intervals.ascii
