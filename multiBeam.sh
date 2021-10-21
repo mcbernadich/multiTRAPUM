@@ -120,13 +120,13 @@ for pointing in ${pointing_list[@]}; do
 	utc_start=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta utc_start)
 	centre_frequency=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta centre_frequency)
 	bandwidth=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta bandwidth)
-	ncahns=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta coherent_nchans)
+	nchan=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta coherent_nchans)
 	tsamp=$(python3 findUTC.py ${path}/${pointing}/apsuse.meta coherent_tsamp)
 	echo ""
 	echo ""
 	echo ""
 	echo "|--------------------------------------------------------------------------------------------------|"
-	echo "Working on pointing ${path}/${pointing} (${name}), with starting time ${utc_start}"
+	echo "Working on pointing ${path}/${pointing} (${name}), with starting time ${utc_start}, center frequency of ${centre_frequency} Hz, bandwidth of {bandwidth} Hz, ${nchan} channels, and sampling time of {tsamp} s."
 	echo ""
 	echo ""
 	echo "Setting up script to run the fourier transforms in the bakground."
