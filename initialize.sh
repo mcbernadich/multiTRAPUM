@@ -34,5 +34,5 @@ echo "ncpus:" >> ${dir}/arguments.txt
 echo "time:" >> ${dir}/arguments.txt
 echo "timesig:" >> ${dir}/arguments.txt
 echo "freqsig:" >> ${dir}/arguments.txt
-echo "chanfrac:" >> ${dir}arguments.txt
+echo "chanfrac:" >> ${dir}/arguments.txt
 echo "intfrac:" >> ${dir}/arguments.txt
