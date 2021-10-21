@@ -126,7 +126,7 @@ for pointing in ${pointing_list[@]}; do
 	echo ""
 	echo ""
 	echo "|--------------------------------------------------------------------------------------------------|"
-	echo "Working on pointing ${path}/${pointing} (${name}), with starting time ${utc_start}, center frequency of ${centre_frequency} Hz, bandwidth of {bandwidth} Hz, ${nchan} channels, and sampling time of {tsamp} s."
+	echo "Working on pointing ${path}/${pointing} (${name}), with starting time ${utc_start}, center frequency at ${centre_frequency} Hz, bandwidth of ${bandwidth} Hz, ${nchan} channels, and sampling time of ${tsamp} s."
 	echo ""
 	echo ""
 	echo "Setting up script to run the fourier transforms in the bakground."
@@ -143,7 +143,7 @@ for pointing in ${pointing_list[@]}; do
 	echo 'Going back to main directory.'
 	cd ..
 	#Loop over the two halves of an observation.
-	for half in $(seq -w 0 $( ls /data${path}/${pointing}/cfbf00000 | wc -l )); do
+	for half in $(seq -w 0 $( ls ${path}/${pointing}/cfbf00000 | wc -l )); do
 		echo ""
 		echo ""
 		echo "Working on the ${half}-th part of pointing ${pointing}"
