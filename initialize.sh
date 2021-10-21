@@ -24,7 +24,7 @@ cp fourier0dm.sh $dir
 cp zapFourier.py $dir
 #Write the arguments file.
 echo "# general parameters" > ${dir}/arguments.txt
-echo "path:" >> ${dir}/arguments.txt
+echo "path: ${path}" >> ${dir}/arguments.txt
 echo "pointing_list:" >> ${dir}/arguments.txt
 echo "rfifind_beams:" >> ${dir}/arguments.txt
 echo "birdies_beams:" >> ${dir}/arguments.txt
