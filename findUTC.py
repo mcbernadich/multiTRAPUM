@@ -6,6 +6,6 @@ import json
 with open(sys.argv[1],"r") as f:
     meta=json.load(f)
 thing=str(meta[sys.argv[2]])
-thing=thing.split(",")[0])
+thing=thing.split(",")[0]
 thing=thing.replace("/","-")
 print(thing)
