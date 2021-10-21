@@ -7,7 +7,7 @@ mkdir ${path_a[-1]}
 for subdirectory in ${subdirectories[@]}; do
 mkdir ${path_a[-1]}/${subdirectory}
 	cp chopCall.sh ${path_a[-1]}/${subdirectory}
-        cp deRed.sh ${path_a[-1]}/${subdirectory}
+    cp deRed.sh ${path_a[-1]}/${subdirectory}
 	cp chopObservations.py ${path_a[-1]}/${subdirectory}
 	cp computeMasks.py ${path_a[-1]}/${subdirectory}
 	cp readBirdies.py ${path_a[-1]}/${subdirectory}
