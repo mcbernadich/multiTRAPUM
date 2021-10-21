@@ -14,91 +14,105 @@ echo "|-----Using getout_rfifind.py from P. Padmanabh and parts of rfifind_getou
 echo "|-----from V. Balakrishnan and M. Cruces, version 15.10.19 .-------------------------|"
 echo "|------------------------------------------------------------------------------------|"
 echo ""
-echo "Pointings ${pointing_list} found in ${path}"
 
 #Parse the arguments fromt the arguments.txt file.
 # It may seem redundant, but it is better this way than to write all of the arguments on a command screen.
 # General arguments (path, pointing_list, rfifind_beams, birdies_beams and chop_samples) need to be set. Otherwise the code won't run.
 # rfifind arguments (ncpus, time, timesig, freqsig, chanfrac and intfrac) will be the default ones unless specified.
-# specific data parameters (band_bottom, band_middle, nchan, tsample) will be read from the header of files unless specified.
+# specific data parameters (band_bottom, band_middle, nchan, tsample) will be read from the header of files.
 while IFS= read -r line; do
 	IFS=": " read -a args <<< $line
-	if [ ${line[0]} = "path" ]; then
-		path=${line[1]}
-	else if [ ${line[0]} = "pointing_list" ]; then
-		pointing_list=${line[1]}
-	else if [ ${rfifind_beams[0]} = "rfifind_beams" ]; then
-		rfifind_beams=${line[1]}
-	else if [ ${rfifind_beams[0]} = "birdies_beams" ]; then
-		birdies_beams=${line[1]}
-	else if [ ${rfifind_beams[0]} = "chop_samples" ]; then
-		samples=${line[1]}
-	else if [ ${rfifind_beams[0]} = "ncpus" ]; then
-		ncpus=${line[1]}
-	else if [ ${rfifind_beams[0]} = "time" ]; then
-		time=${line[1]}
-	else if [ ${rfifind_beams[0]} = "timesig" ]; then
-		timesig=${line[1]}
-	else if [ ${rfifind_beams[0]} = "freqsig" ]; then
-		freqsig=${line[1]}
-	else if [ ${rfifind_beams[0]} = "chanfrac" ]; then
-		chanfrac=${line[1]}
-	else if [ ${rfifind_beams[0]} = "intfrac" ]; then
-		intfrac=${line[1]}
+	if [[ ${args[0]} = "path" ]]; then
+		path=${args[1]}
+	elif [[ ${args[0]} = "pointing_list" ]]; then
+		pointing_list=${args[1]}
+	elif [[ ${args[0]} = "rfifind_beams" ]]; then
+		rfifind_beams=${args[1]}
+	elif [[ ${args[0]} = "birdies_beams" ]]; then
+		birdies_beams=${args[1]}
+	elif [[ ${args[0]} = "chop_samples" ]]; then
+		samples=${args[1]}
+	elif [[ ${args[0]} = "ncpus" ]]; then
+		ncpus=${args[1]}
+	elif [[ ${args[0]} = "time" ]]; then
+		time=${args[1]}
+	elif [[ ${args[0]} = "timesig" ]]; then
+		timesig=${args[1]}
+	elif [[ ${args[0]} = "freqsig" ]]; then
+		freqsig=${args[1]}
+	elif [[ ${args[0]} = "chanfrac" ]]; then
+		chanfrac=${args[1]}
+	elif [[ ${args[0]} = "intfrac" ]]; then
+		intfrac=${args[1]}
+	fi
 done < arguments.txt
 
 #Check which variables have been set
 if test $path; then
 	echo "Masking pointings in ${path}"
+	echo " "
 else
 	echo "Please specify path in arguments.txt"
 	exit 1
 fi
-if [ [ test $pointing_list ] and [ $pointing_list = "all" ] ]; then
+if test $pointing_list && [[ $pointing_list == "all" ]]; then
 	echo "All of the pointings in this path will be masked."
+	echo " "
 	pointing_list=$(ls ${path})
-else if test $pointing_list; then
-	IFS=" " rad -a pointing_list <<< ${pointing_list}
+elif test $pointing_list; then
+	IFS="," read -a pointing_list <<< ${pointing_list}
 	echo "Pointings to be masked: ${pointing_list[@]}"
+	echo " "
 else 
-	echo "Please specify pointin_list in arguments.txt"
+	echo "Please specify pointing_list in arguments.txt"
 	exit 1
 fi
 if test $rfifind_beams; then
 	echo "Pointings to be chopped and sent to rfifind: ${rfifind_beams}"
+	echo " "
 else
 	echo "Please specify the beams to be chopped and un through rfifind in arguments.txt"
 	exit 1
 fi
 if test $birdies_beams; then
-	echo "Beams for the multibeam birdies: ${rfifind_beams}"
+	echo "Beams for the multibeam birdies: ${birdies_beams}"
+	echo " "
 else
 	echo "Please specify the multibeam birdies beams in arguments.txt"
 	exit 1
 fi
 if test $samples; then
-	echo "Beams will be chopped every ${samples} samples."
+	echo "rfifind beams will be chopped every ${samples} samples."
+	echo " "
 else
 	echo "Please specify the chopping_samples in arguments.txt"
+	exit 1
 fi
-if [ [ test $ncpus ] = False ]; then
+if ! test $ncpus; then
 	ncpus=1
 fi
-if [ [ test $time ] = False ]; then
+if ! test $time; then
 	time=30
 fi
-if [ [ test $timesig ] = False ]; then
+if ! test $timesig; then
 	timesig=10
 fi
-if [ [ test $freqsig ] = False ]; then
-	time=4
+if ! test $freqsig; then
+	freqsig=4
 fi
-if [ [ test $chanfrac ] = False ]; then
+if ! test $chanfrac; then
 	chanfrac=0.7
 fi
-if [ [ test $intfrac ] = False ]; then
+if ! test $intfrac; then
 	intfrac=0.3
 fi
+echo "rfifind parameters are:"
+echo "ncpus= ${ncpus}"
+echo "time= ${time}"
+echo "timesig= ${timesig}"
+echo "freqsig= ${freqsig}"
+echo "chanfrac= ${chanfrac}"
+echo "intfrac= ${intfrac}"
 
 #Loop over the pointings.
 for pointing in ${pointing_list[@]}; do
@@ -118,7 +132,7 @@ for pointing in ${pointing_list[@]}; do
 	echo "Setting up script to run the fourier transforms in the bakground."
 	mkdir ${name}_Fourier
 	echo "#!/bin/bash" > ${name}_Fourier/birdies_script.sh
-	echo "IFS=' ' read -a beams <<< '${birdies_beams}'" >> ${name}_Fourier/birdies_script.sh
+	echo "IFS=',' read -a beams <<< '${birdies_beams}'" >> ${name}_Fourier/birdies_script.sh
 	echo 'for beam in ${beams[@]}; do' >> ${name}_Fourier/birdies_script.sh
 	echo '	${sing_presto} bash ../fourier0dm.sh /data'${path}'/'${pointing}'/${beam} '${name}'_${beam} > '${name}'_${beam}_logs.txt' >> ${name}_Fourier/birdies_script.sh
 	echo "done" >> ${name}_Fourier/birdies_script.sh
@@ -134,7 +148,7 @@ for pointing in ${pointing_list[@]}; do
 		echo ""
 		echo "Working on the ${half}-th part of pointing ${pointing}"
 		#Record the satring time, and sample size of every beam and write them in headers.txt
-		IFS=' ' read -a beams <<< "${rfifind beams}"
+		IFS=',' read -a beams <<< "${rfifind_beams}"
 		echo ""
 		echo ""
 		echo "Reading the headers of beams ${beams[@]}"
