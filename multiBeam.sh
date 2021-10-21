@@ -134,7 +134,7 @@ for pointing in ${pointing_list[@]}; do
 	echo "#!/bin/bash" > ${name}_Fourier/birdies_script.sh
 	echo "IFS=',' read -a beams <<< '${birdies_beams}'" >> ${name}_Fourier/birdies_script.sh
 	echo 'for beam in ${beams[@]}; do' >> ${name}_Fourier/birdies_script.sh
-	echo '	${sing_presto} bash ../fourier0dm.sh /data'${path}'/'${pointing}'/${beam} '${name}'_${beam} > '${name}'_${beam}_logs.txt' >> ${name}_Fourier/birdies_script.sh
+	echo '	'${sing_presto}' bash ../fourier0dm.sh /data'${path}'/'${pointing}'/${beam} '${name}'_${beam} > '${name}'_${beam}_logs.txt' >> ${name}_Fourier/birdies_script.sh
 	echo "done" >> ${name}_Fourier/birdies_script.sh
 	echo 'Moving to '${name}'_Fourier .'
 	cd ${name}_Fourier
