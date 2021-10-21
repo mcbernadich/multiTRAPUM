@@ -1,9 +1,10 @@
 #!/bin/bash
 
 #Set the singularty image paths:
-sing_presto=/beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg
-sing_sigproc=/beegfs/u/mcbernadich/simages/ProtoSearch_SIGPROC_v5.sif
-sing_sigpyproc=/beegfs/u/mcbernadich/simages/peasoup_cuda10.2.sigm
+sing_presto='singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/fold-tools-2020-11-18-4cca94447feb.simg'
+sing_sigproc='singularity exec -B /:/data:ro /beegfs/u/mcbernadich/simages/ProtoSearch_SIGPROC_v5.sif'
+sing_sigpyproc='singularity exec -B /:/data:ro /beegfs/u/mcbernadich/simages/peasoup_cuda10.2.sigm'
+sing_filtool='singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/fbfhn01.mpifr-be.mkat.karoo.kat.ac.za_7000_trapum_search:cuda10.2-20211008-2021-10-08-0326eec5797c.simg'
 
 echo ""
 echo "|------------------------------------------------------------------------------------|"
@@ -119,7 +120,7 @@ for pointing in ${pointing_list[@]}; do
 	echo "#!/bin/bash" > ${name}_Fourier/birdies_script.sh
 	echo "IFS=' ' read -a beams <<< '${birdies_beams}'" >> ${name}_Fourier/birdies_script.sh
 	echo 'for beam in ${beams[@]}; do' >> ${name}_Fourier/birdies_script.sh
-	echo '	singularity exec -B /:/data:ro ${sing_presto} bash ../fourier0dm.sh /data'${path}'/'${pointing}'/${beam} '${name}'_${beam} > '${name}'_${beam}_logs.txt' >> ${name}_Fourier/birdies_script.sh
+	echo '	${sing_presto} bash ../fourier0dm.sh /data'${path}'/'${pointing}'/${beam} '${name}'_${beam} > '${name}'_${beam}_logs.txt' >> ${name}_Fourier/birdies_script.sh
 	echo "done" >> ${name}_Fourier/birdies_script.sh
 	echo 'Moving to '${name}'_Fourier .'
 	cd ${name}_Fourier
@@ -140,7 +141,7 @@ for pointing in ${pointing_list[@]}; do
 		for beam in ${beams[@]}; do
 			echo ""
 			echo "Working on beam ${beam}"
-			singularity exec -B /:/data:ro ${sing_sigproc} bash readHeader.sh /data${path}/${pointing}/${beam} $half
+			${sing_sigproc} bash readHeader.sh /data${path}/${pointing}/${beam} $half
 		done
 		#Read headers.txt to establish the first and last sample for each beam and write it into intervals.ascii.
 		echo ""
@@ -159,7 +160,7 @@ for pointing in ${pointing_list[@]}; do
 			IFS=' ' read -a args <<< $line
 			echo ""
 			echo "Working on beam ${args[0]}"
-			singularity exec -B /:/data:ro ${sing_sigpyproc} bash chopCall.sh /data${path}/${pointing}/${args[0]} ${samples} ${args[1]} ${args[2]} ${#beams[@]} ${index[${i}]} $half
+			${sing_sigpyproc} bash chopCall.sh /data${path}/${pointing}/${args[0]} ${samples} ${args[1]} ${args[2]} ${#beams[@]} ${index[${i}]} $half
 			i=$[${i}+1]
 		done < intervals.ascii
 		rm intervals.ascii
@@ -168,14 +169,14 @@ for pointing in ${pointing_list[@]}; do
 	echo ""
 	echo ""
 	echo "Creating the multichannel mask for the observation. rfifind logs will be written at "${name}"_multibeam_rfifind_run.txt"
-	singularity exec -B /:/data:ro ${sing_presto} rfifind -ncpus ${ncpus} -time ${time} -timesig ${timesig} -freqsig ${freqsig} -intfrac ${intfrac} -chanfrac {chanfrac} -o ${name}_multibeam -filterbank *.chop > ${name}_multibeam_rfifind_run.txt
+	${sing_presto} rfifind -ncpus ${ncpus} -time ${time} -timesig ${timesig} -freqsig ${freqsig} -intfrac ${intfrac} -chanfrac {chanfrac} -o ${name}_multibeam -filterbank *.chop > ${name}_multibeam_rfifind_run.txt
 	rm *.chop
 	#Translate the masks into a frequency range.
 	echo ""
 	echo ""
 	echo "Translating the mask into a format readable by peasoup."
-	singularity exec -B /:/data:ro ${sing_presto} python rfifind_stats_noplot.py ${name}_multibeam_rfifind.stats
-	singularity exec -B /:/data:ro ${sing_presto} weights_to_ignorechan.py ${name}_multibeam_rfifind.weights > ${name}_multibeam_rfifind_zap_channels.ascii
+	${sing_presto} python rfifind_stats_noplot.py ${name}_multibeam_rfifind.stats
+	${sing_presto} weights_to_ignorechan.py ${name}_multibeam_rfifind.weights > ${name}_multibeam_rfifind_zap_channels.ascii
 	frequencies=$(python3 translate.py ${name}_multibeam_rfifind_zap_channels.ascii ${centre_frequency} ${bandwidth} ${nchan}) #Add arguments here to modify the bandwith
 	echo ${frequencies} > ${name}_multibeam_rfifind_zap_frequencies.ascii
 	echo ""
