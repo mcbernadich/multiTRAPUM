@@ -64,7 +64,7 @@ The general parameters are absolutely needed for the pipeline, otherwise the cod
 
 ```rfifind_beams``` and ```birdies_beams``` are the listing of beams that you want to take for the frequency-domain masking and the Fourier-domain masking, and they must also be separated by comas. Mind that the order of the elents in the list actually affects the order in which they are run! It is also very recommended that ```rfifind_beams``` contins more beams than ```birdies_beams```, as the rfifind pipeline and the Fourier pipeline run in parallel, but you don't want the rfifind run finishing before the Fourier run!
 
-```chop_samples``` is the amount of samples that each beam slice (.chop files) contains, and it is recommended to select a power of 2. The correct size of ```chop_samples``` should be decided upont the sampling time of your data.
+```chop_samples``` is the amount of samples that each beam slice (.chop files) contains, and it is recommended to select a power of 2. The correct size of ```chop_samples``` should be decided upon the sampling time of your data.
 
 rfifind parameters are, quite literally, the parameters taken by rfifind. If left blank, they will be the rfifind default values.
 
