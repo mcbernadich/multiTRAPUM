@@ -1,46 +1,86 @@
-# TRAPUM_multibeam_rfi
+# multiTRAPUM
 
-This is the current working version that I'm using to create masks for the MLGPS survey. As such some things are hard-codded and some others are accomodated to work in the environtment where I run it. Eventually, a more general version of the code will go to the ```main``` branch.
+This is an RFI masking pipelined based on the multibeam nature of the TRAPUM pulsar surveys. The outputs are a channels mask based on rfifind and a birdies mask based on a multibeam comparisson ready to be given to PEASOUP as it is implemented on APSUSE. The user can choose which pointings to run it on, which beams to use, and their preferred settings specifications. And all it takes is a single bash command!
+
+Used softwares: singularity, presto, sigproc, sigpyproc and filtools. getout_rfifind.py from P. Padmanabh and parts of rfifind_getout from V. Balakrishnan and M. Cruces, version 15.10.19.
+
+## How does it work? Easy peasy explanation
+
+### Frequenc-domain channel masks: 
+
+From a pointing, the user chooses a set of beams they want to get the channel mask out of. Say that your pointing has 480 beams. Then, perhaps you want to take the central beam and a ring of 6 beams far out in the edges. When running, the pipeline first dereddens the beams with filtools and then takes the 1rst N time samples of beam 1 and store them in a .chop file. Then, it takes the 2nd N samples of beam 2 and stores it in another .chop file... until it reaches the 7th N samples of beam 7. At this point, the loop starts again, taking the 8th N samples of beam 1. Rinse and repeat ountil the end of the observation is reached. Finally, rfifind is run on all of the concatendated .chop files or, as we call it behind the scenes, a "Frankeinbeam". Of course, the scrip makes sure that all of the .chop files are contiguous!
+
+This code is very flexible. You can specify the order in which beams are run through, the samples that each slicing operation takes and the parameters used by rfifind. Technically, you can choose ALL of the beams if so you wish, or even just one beam and specify a slicing sample size larger than the total samples to ensure a standard rfifind run on a single beam. Choose at your convenience!
+
+### Forier-domain birdies mask:
+
+From a pointing, the user chooses once again a set of beams to run the mutibeam Fourier domain matching filter. In this case, the chosen beams are taken in their entirety and a time series is take on of them with prepdata, which is then fourier transformed and de-reddened. Then, the de-reddened powers of beams are matched to each other. If a signal goes above power ```P=ln(2*size_fourier_transform)``` in ```int(np.round(Nbeams/2))+1``` or more beams, then the Foruier bins involved are masked and the frequency ranges are iotputted. These limits are based on 1.-) the false alarm probabilty and 2.-) the multibeam nature of the filter. For instance, if the user has take 4 beam, a signal will need to repeat in at lest 3 beams to be zapped. The more beams are taken, the closer to just half of the beams this limit goes.
+
+Additionally, birdies outputed by rfifind are also included.
 
 ## Usage
 
-The best way to use it in its current state is to clone this in your prefered directory, and run:
-```
-bash initialize.sh ${directory}
-```
-Where ```${directory}``` simply stands for the directory where the data of the most recent pointings are stored. For instance, for the Jul 3 2021 data, ```${directory}="/beegfs/DATA/TRAPUM/SCI-20200703-MK-01/20210701-0007"```. This will create a folder with the name of last sub-folder in ```${directory}```, in the example ```20210701-0007```. Inside of this folder, there will be four more sub-folders, called ```1```, ```2```, ```3``` and ```4```, and a script named ```join.sh```. Which can be ignored until later.
+### Setup:
 
-Inside of ```1```, for instance, all the rellevant scripts will have been copied over, along with a newly created script called ```execute.sh```. The script just says:
-```
-#!/bin/bash
-bash multiBeam.sh /beegfs/DATA/TRAPUM/SCI-20200703-MK-01/20210701-0007 0,9 > logs.txt
-```
-Which calls the main script for you. Similar scripts will be found in ```2```, ```3``` and ```4```, but instead of ```0,9```, they have other ranges. These ranges are important: they are the pointings that will be masked. If you write ```ls ${directory}```, you will see the pointigns appearing in order. The same order is taken by the ```multiBeam.sh``` call inside of each ``execute.sh``, and ```0,9``` indicates that pointings from 0 to 9 in the order in which they appear in ```ls ${directory}``` will be masked. Other ranges indicate other pointings in the same order.
+Just clone this repository to your prefered place in APSUSE with ```gir clone https://github.com/mcbernadich/multiTRAPUM```
+The code assumes that you have python, python3, numpy and singularity. If this is the case, you are good to go.
 
-Originally, that was it. Running ```bash execute.sh``` would do the rest of the job for you for the specified range. The masks are created cronologically, but by running the four scripts in the four folders in different screens, you can have fours masks being created at the same time. But since the introduction of follow-up observations, pointings with a number of beams other than 481 have been introduced. If the code stumbles upon them, it will get stuck. This is where the script ```count_pointings.sh``` will help you. Running
-```
-bash count_pointings.sh ${directory}
-```
-will print to you the number of beams in each pointings, and the number of fiilterbank files in cfbf0000. For instance:
-```
-bash count_pointings.sh	/beegfs/DATA/TRAPUM/SCI-20200703-MK-01/20210701-0007
-```
-reveals that the pointings 1 and 25:
-```
-...
-1
-/beegfs/DATA/TRAPUM/SCI-20200703-MK-01/20210701-0007/20210703_180927: 15
-2021-07-03-18:09:32_cfbf00000_0000000000000000.fil 2021-07-03-18:09:32_cfbf00000_0000004012498944.fil 2021-07-03-18:09:32_cfbf00000_0000008024997888.fil 2021-07-03-18:09:32_cfbf00000_0000012037496832.fil
-...
-25
-/beegfs/DATA/TRAPUM/SCI-20200703-MK-01/20210701-0007/20210703_224756: 15
-2021-07-03-22:48:02_cfbf00000_0000000000000000.fil 2021-07-03-22:48:02_cfbf00000_0000004012498944.fil
-...
-```
-have 15 beams each. Even more, ```/beegfs/DATA/TRAPUM/SCI-20200703-MK-01/20210701-0007/20210703_180927``` contains 4 filterbanks instead of 2. These correspond to the follow-up observations of ```J1806-2124``` and ```J1449-6339```. You want to avoid these pointings in the masking but just changing the ranges inside of the ```execute.sh``` scripts. Once this is done, you can safelly run the scripts in their own screens.
+### Initialization:
 
-After all the masks have been created, just run the forementioned ```join.sh``` script with ```bash join.sh```, and all the enatires for the files ```zappingList.sql``` and ```fractionList.ascii``` will be collected.
+Inside of the repository folder you will see a large bunch of scripts. You only need to worry about ```initialize.sh```, ```arguments.txt``` and ```multiBeam.sh```. To intialize, check where the main directory where your pointing data lies at and decide a name for the folder where you want to run the pipeline. For instance, the command
+
+```bash intialize.sh /beegfs/DATA/TRAPUM/SCI-20200703-MK-01/20210707-0029 20211015```
+
+will create a directory called ${your_dir}/multiTRAPUM/20211015 and copy all of the scripts inside of it anew. You can also give it an already existing directory.
+
+#### Giving arguments:
+
+Inside of the working directory created by intialize.sh, you will find a file called ```arguments.txt```. Make sure that you fill each entry accordingly. An example of how should the file look like is the following:
+
+```
+# general parameters
+path: /beegfs/DATA/TRAPUM/SCI-20200703-MK-01/20210707-0029
+pointing_list: 20211015_175510,20211015_174500,20211015_173450
+rfifind_beams: cfbf00000,cfbf00476,cfbf00460,cfbf00026,cfbf00025,cfbf00475,cfbf00461
+birdies_beams: cfbf00000,cfbf00476,cfbf00025,cfbf00461
+chop_samples: 32768
+# rfifind parameters
+ncpus: 8
+time: 6
+timesig:
+freqsig: 4
+chanfrac:
+intfrac: 0.1
+# miscellaneous parameters
+cleanup: yes
+```
+
+The general parameters are absolutelly needed for the pipeline, otherwise the code will just not run:
+
+```path``` is the main direcotry where your pointings lie at. 
+
+```pointing_list``` is a listing of the directories inside of ```path``` (pointings!) that you want to run the pipeline on, and they must be separated by comas. Since listing all of the pointings can be quite the hassle, the keyword ```pointing_list: all``` can be given instead to run all of the pointins inside of ```path``` instead.
+
+```rfifind_beams``` and ```birdies_beams``` are the listing of beams that you want to take for the frequency-domain masking and the Fourier-domain masking, and they must also be separated by comas. Mind that the order of the elents in the list actually affects the order in which they are run! It is also very recommended that ```rfifind_beams``` contins more beams than ```birdies_beams```, as the rfifind pipeline and the Foruier pipeline run in parallel, but you don't want the rfifind run finishing before the Foruier run!
+
+```chop_samples``` is the amount of samples that each beam slice (.chop files) contains, and it is recommended to select a power of 2. The correct size of ```chop_samples``` should be decided upont the sampling time of your data.
+
+rfifind parameters are, quite literally, the parameters taken by rfifind. If left blank, they will be the rfifind default values.
+
+Miscellaneous parameters are those that specify certain running perks. Unless specified otherwise, they go to default.
+
+```cleanup``` can be used to tell ```multiBeam.sh``` to not cleanup the .chop files and the time series and their fourier transforms with ```cleanup: no```. Otherwisem, they are just deleted.
+
+### Running the code:
+
+Once the working directory has been initalized and ```arguments.txt``` has been filled by the user, just run the pipeline with ```bash multiBeam.sh``` inside of the working directory. Then wait for the results. Relax, go get lunch, and take a nap (or do some other work if you want!). 
+
+### Collecting the output:
+
+Once the pipeline has finished running, you can collect the masks in the created file ```zappingList.sql```. This file is a sql script containing ```INSERT INTO rfi_masks (utc, frequency_mask, birdie_list) VALUE ("*","*","*")``` entries to be fed to be updated to the cluster.
+
+Additionally, there is the ```fractionList.ascii```, which lists the fraction of masked frequency channels and masked Fourier bins in %. This file is just an human-readable for of the output summary, but it useful to know, for example, wether one of your pointings has very bad RFI.
 
 ## Questions and inquiries
 
-Just write to mcbernadich#mpifr-bonn.mpg.de if you have any. Remember, this is a working version, and it is not intended to be the final version. A proper documentation will eventually be built too.
+Just write to mcbernadich@mpifr-bonn.mpg.de if you have any.

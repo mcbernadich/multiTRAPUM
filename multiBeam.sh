@@ -8,8 +8,8 @@ sing_filtool='singularity exec -B /:/data:ro /beegfs/u/ebarr/singularity_images/
 
 echo ""
 echo "|------------------------------------------------------------------------------------|"
-echo "|-----Multi-beam channel mask producer using singularity, presto, sigproc and--------|"
-echo "|-----sigpyproc.---------------------------------------------------------------------|"
+echo "|-----Multi-beam channel mask producer using singularity, presto, sigproc,-----------|"
+echo "|-----sigpyproc and filtools.--------------------------------------------------------|"
 echo "|-----Using getout_rfifind.py from P. Padmanabh and parts of rfifind_getout----------|"
 echo "|-----from V. Balakrishnan and M. Cruces, version 15.10.19 .-------------------------|"
 echo "|------------------------------------------------------------------------------------|"
@@ -44,6 +44,10 @@ while IFS= read -r line; do
 		chanfrac=${args[1]}
 	elif [[ ${args[0]} = "intfrac" ]]; then
 		intfrac=${args[1]}
+	elif [[ ${args[0]} = "cleanup" ]]; then
+		cleanup=${args[1]}
+	elif [[ ${args[0]} = "filtool" ]]; then
+		filtool=${args[1]}
 	fi
 done < arguments.txt
 
@@ -113,6 +117,20 @@ echo "timesig= ${timesig}"
 echo "freqsig= ${freqsig}"
 echo "chanfrac= ${chanfrac}"
 echo "intfrac= ${intfrac}"
+if test $cleanup && [[ $cleanup == "no" ]]; then
+	echo "'cleanup: no' sepcified. Therefore, .chop files, time series, and fourier transforms will be kept."
+	delete="yes"
+else
+	echo "'cleanup: no' not specified. Therefore, .chop files, time series, and fourier transforms will be deleted."
+	delete="no"
+fi
+if test $cleanup && [[ $filtool == "no" ]]; then
+	echo "'filtool: no' sepcified. Therefore, filtool is disabled."
+	filtool="no"
+else
+	echo "'filtool: no' not sepcified. Therefore, filtool remains enabled."
+	filtool="yes"
+fi
 
 #Loop over the pointings.
 for pointing in ${pointing_list[@]}; do
@@ -173,7 +191,16 @@ for pointing in ${pointing_list[@]}; do
 			IFS=' ' read -a args <<< $line
 			echo ""
 			echo "Working on beam ${args[0]}"
-			${sing_filtool} bash deRed.sh /data${path}/${pointing}/${args[0]} $half
+			if [[ $filtool == "yes" ]]; then
+				${sing_filtool} bash deRed.sh /data${path}/${pointing}/${args[0]} $half
+			elif [[ $filtool == "no" ]]; then
+				echo "Copying files from ${path}"
+				cp $(find /data${path}/${pointing}/${args[0]} -name *.fil) .
+				IFS=' ' read -a files <<< $(ls *.fil)
+				IFS='.' read -a name <<< ${files[${half#0}]}
+				echo "Filtools disable. Creating a dummy out of ${files[${half#0}]}."
+				mv ${files[${half#0}]} ${name[0]}_01.fil
+			fi
 			${sing_sigpyproc} bash chopCall.sh /data${path}/${pointing}/${args[0]} ${samples} ${args[1]} ${args[2]} ${#beams[@]} ${i} $half
 			i=$[${i}+1]
 		done < intervals.ascii
@@ -183,8 +210,13 @@ for pointing in ${pointing_list[@]}; do
 	echo ""
 	echo ""
 	echo "Creating the multichannel mask for the observation. rfifind logs will be written at "${name}"_multibeam_rfifind_run.txt"
-	${sing_presto} rfifind -ncpus ${ncpus} -time ${time} -timesig ${timesig} -freqsig ${freqsig} -intfrac ${intfrac} -chanfrac {chanfrac} -o ${name}_multibeam -filterbank *.chop > ${name}_multibeam_rfifind_run.txt
-	rm *.chop
+	${sing_presto} rfifind -ncpus ${ncpus} -time ${time} -timesig ${timesig} -freqsig ${freqsig} -intfrac ${intfrac} -chanfrac ${chanfrac} -o ${name}_multibeam -filterbank *.chop > ${name}_multibeam_rfifind_run.txt
+	if [[ $delete == "yes" ]]; then
+		rm *.chop
+	elif [[ $delete == "no" ]]; then
+		mkdir ${name}_chopfiles
+		mv *.chop ${name}_chopfiles
+	fi
 	#Translate the masks into a frequency range.
 	echo ""
 	echo ""
@@ -220,6 +252,9 @@ for pointing in ${pointing_list[@]}; do
 	echo "Translating the frequencies and birdies into a format readable by peasoup."
 	rfifind_birdies=$(python3 readBirdies.py ${name}_multibeam_rfifind.birdies)
 	multibeam_birdies=$(python3 zapFourier.py ${name} "${name}_Fourier/*_0dm_time_series_red.fft" ${tsamp})
+	if [[ $delete == "yes" ]]; then
+		rm ${name}_Fourier/*_0dm_time_series_red.fft ${name}_Fourier/*_0dm_time_series_red.dat ${name}_Fourier/*_0dm_time_series_red.red
+	fi
 	#Write it all into a sql script.
 	echo 'INSERT INTO rfi_masks (utc, frequency_mask, birdie_list) VALUE ("'${utc_start}'", "'${frequencies}'", "1.65925:0.002,3.31785:0.002,6.6357:0.002,5.55556:0.002,11.1111:0.002,'${rfifind_birdies}','${multibeam_birdies}'");' >> zappingList.sql
 	echo ""

@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 import glob
-import matplotlib.pyplot as plt
 #Compare the fourier transforms of different beams and return a list of birdies to zap.
 #As arguments, it takes the anme of the pointing,
 # a list of de-reddened time fft of arbitray size

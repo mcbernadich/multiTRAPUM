@@ -11,6 +11,7 @@ timesig:
 freqsig:
 chanfrac:
 intfrac:
-
+# miscellaneous parameters
+cleanup: yes
 
 

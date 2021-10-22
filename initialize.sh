@@ -36,3 +36,5 @@ echo "timesig:" >> ${dir}/arguments.txt
 echo "freqsig:" >> ${dir}/arguments.txt
 echo "chanfrac:" >> ${dir}/arguments.txt
 echo "intfrac:" >> ${dir}/arguments.txt
+echo "# miscellaneous parameters" >> ${dir}/arguments.txt
+echo "cleanup: yes" >> ${dir}/arguments.txt
