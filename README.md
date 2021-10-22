@@ -6,13 +6,13 @@ Used softwares: singularity, presto, sigproc, sigpyproc and filtools. getout_rfi
 
 ## How does it work? Easy peasy explanation
 
-### Frequenc-domain channel masks: 
+### Frequency-domain channel masks: 
 
 From a pointing, the user chooses a set of beams they want to get the channel mask out of. Say that your pointing has 480 beams. Then, perhaps you want to take the central beam and a ring of 6 beams far out in the edges. When running, the pipeline first dereddens the beams with filtools and then takes the 1rst N time samples of beam 1 and store them in a .chop file. Then, it takes the 2nd N samples of beam 2 and stores it in another .chop file... until it reaches the 7th N samples of beam 7. At this point, the loop starts again, taking the 8th N samples of beam 1. Rinse and repeat ountil the end of the observation is reached. Finally, rfifind is run on all of the concatendated .chop files or, as we call it behind the scenes, a "Frankeinbeam". Of course, the scrip makes sure that all of the .chop files are contiguous!
 
 This code is very flexible. You can specify the order in which beams are run through, the samples that each slicing operation takes and the parameters used by rfifind. Technically, you can choose ALL of the beams if so you wish, or even just one beam and specify a slicing sample size larger than the total samples to ensure a standard rfifind run on a single beam. Choose at your convenience!
 
-### Forier-domain birdies mask:
+### Fourier-domain birdies mask:
 
 From a pointing, the user chooses once again a set of beams to run the mutibeam Fourier domain matching filter. In this case, the chosen beams are taken in their entirety and a time series is take on of them with prepdata, which is then fourier transformed and de-reddened. Then, the de-reddened powers of beams are matched to each other. If a signal goes above power ```P=ln(2*size_fourier_transform)``` in ```int(np.round(Nbeams/2))+1``` or more beams, then the Foruier bins involved are masked and the frequency ranges are iotputted. These limits are based on 1.-) the false alarm probabilty and 2.-) the multibeam nature of the filter. For instance, if the user has take 4 beam, a signal will need to repeat in at lest 3 beams to be zapped. The more beams are taken, the closer to just half of the beams this limit goes.
 
@@ -53,6 +53,7 @@ chanfrac:
 intfrac: 0.1
 # miscellaneous parameters
 cleanup: yes
+filtool: yes
 ```
 
 The general parameters are absolutelly needed for the pipeline, otherwise the code will just not run:
@@ -69,7 +70,9 @@ rfifind parameters are, quite literally, the parameters taken by rfifind. If lef
 
 Miscellaneous parameters are those that specify certain running perks. Unless specified otherwise, they go to default.
 
-```cleanup``` can be used to tell ```multiBeam.sh``` to not cleanup the .chop files and the time series and their fourier transforms with ```cleanup: no```. Otherwisem, they are just deleted.
+```cleanup``` can be used to tell ```multiBeam.sh``` to not cleanup the .chop files and the time series and their fourier transforms with ```cleanup: no```. Otherwise, they are just deleted.
+
+```filtool``` allows you to disble running filtool on the beams before chopping by writing ```cleanup: no```. In general, using filtool is recommended as it removes rednoise from beams and eliminates sharp discontinuities in between beams that result in spurious artifacts deceted by rfifind. However, if your pipeline doesn't use filtool, then perhaps it is better to disable it in ```multiBeam.sh``` too, as these artifact only appear in 1/40 pointings. 
 
 ### Running the code:
 
