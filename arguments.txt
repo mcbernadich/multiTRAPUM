@@ -1,5 +1,5 @@
 # general parameters
-path: 
+path:
 pointing_list:
 rfifind_beams:
 birdies_beams:
@@ -11,5 +11,6 @@ timesig:
 freqsig:
 chanfrac:
 intfrac:
+
 
 

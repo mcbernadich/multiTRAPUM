@@ -168,14 +168,13 @@ for pointing in ${pointing_list[@]}; do
 		echo ""
 		echo ""
 		echo "Chopping the files from beams ${beams[@]}"
-		index=$(seq -w 1 ${#beams[@]})
-		i=0
+		i=1
 		while IFS= read -r line; do
 			IFS=' ' read -a args <<< $line
 			echo ""
 			echo "Working on beam ${args[0]}"
 			${sing_filtool} bash deRed.sh /data${path}/${pointing}/${args[0]} $half
-			${sing_sigpyproc} bash chopCall.sh /data${path}/${pointing}/${args[0]} ${samples} ${args[1]} ${args[2]} ${#beams[@]} ${index[${i}]} $half
+			${sing_sigpyproc} bash chopCall.sh /data${path}/${pointing}/${args[0]} ${samples} ${args[1]} ${args[2]} ${#beams[@]} ${i} $half
 			i=$[${i}+1]
 		done < intervals.ascii
 		rm intervals.ascii
