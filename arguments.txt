@@ -13,5 +13,5 @@ chanfrac:
 intfrac:
 # miscellaneous parameters
 cleanup: yes
-
+filtool: yes
 

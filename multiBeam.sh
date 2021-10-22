@@ -118,14 +118,14 @@ echo "freqsig= ${freqsig}"
 echo "chanfrac= ${chanfrac}"
 echo "intfrac= ${intfrac}"
 if test $cleanup && [[ $cleanup == "no" ]]; then
-	echo "'cleanup: no' sepcified. Therefore, .chop files, time series, and fourier transforms will be kept."
+	echo "'cleanup: no' specified. Therefore, .chop files, time series, and fourier transforms will be kept."
 	delete="yes"
 else
 	echo "'cleanup: no' not specified. Therefore, .chop files, time series, and fourier transforms will be deleted."
 	delete="no"
 fi
-if test $cleanup && [[ $filtool == "no" ]]; then
-	echo "'filtool: no' sepcified. Therefore, filtool is disabled."
+if test $filtool && [[ $filtool == "no" ]]; then
+	echo "'filtool: no' specified. Therefore, filtool is disabled."
 	filtool="no"
 else
 	echo "'filtool: no' not sepcified. Therefore, filtool remains enabled."
@@ -195,7 +195,7 @@ for pointing in ${pointing_list[@]}; do
 				${sing_filtool} bash deRed.sh /data${path}/${pointing}/${args[0]} $half
 			elif [[ $filtool == "no" ]]; then
 				echo "Copying files from ${path}"
-				cp $(find /data${path}/${pointing}/${args[0]} -name *.fil) .
+				cp $(find ${path}/${pointing}/${args[0]} -name *.fil) .
 				IFS=' ' read -a files <<< $(ls *.fil)
 				IFS='.' read -a name <<< ${files[${half#0}]}
 				echo "Filtools disable. Creating a dummy out of ${files[${half#0}]}."
