@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 import glob
 # This code looks for masks of a particular name and counts the amount of masked channels.
 # sys.argv[1] should be a key string for the files you are looking for.
@@ -14,8 +15,8 @@ def count_channels(mask):
             total=total+int(hi_lo[1])-int(hi_lo[0])+1
         else:
             total=total+1
-    name=mask.split("_")
-    pointing=name[0]+"_"+name[1]+"_"+name[2]
+    name=np.array(mask.split("_"))
+    pointing=numpy.flip(name)[4:]
     read_file.close()
     read_file=open(pointing+"_multibeam_birdies_logs.txt","r")
     line=read_file.readline()
