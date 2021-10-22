@@ -10,7 +10,7 @@ Used softwares: singularity, presto, sigproc, sigpyproc and filtools. getout_rfi
 
 From a pointing, the user chooses a set of beams they want to get the channel mask out of. Say that your pointing has 480 beams. Then, perhaps you want to take the central beam and a ring of 6 beams far out in the edges. When running, the pipeline first dereddens the beams with filtools and then takes the 1rst N time samples of beam 1 and store them in a .chop file. Then, it takes the 2nd N samples of beam 2 and stores it in another .chop file... until it reaches the 7th N samples of beam 7. At this point, the loop starts again, taking the 8th N samples of beam 1. Rinse and repeat ountil the end of the observation is reached. Finally, rfifind is run on all of the concatendated .chop files or, as we call it behind the scenes, a "Frankeinbeam". Of course, the scrip makes sure that all of the .chop files are contiguous!
 
-This code is very flexible. You can specify the order in which beams are run through, the samples that each slicing operation takes and the parameters used by rfifind. Technically, you can choose ALL of the beams if so you wish, or even just one beam and specify a slicing sample size larger than the total samples to ensure a standard rfifind run on a single beam. Choose at your convenience!
+This code is very flexible. You can specify the order in which beams are run through, the samples that each slicing operation takes and the parameters used by rfifind. Tecnically, you can choose ALL of the beams if so you wish, or even just one beam and specify a slicing sample size larger than the total samples to ensure a standard rfifind run on a single beam. Choose at your convenience!
 
 ### Fourier-domain birdies mask:
 
@@ -22,7 +22,7 @@ Additionally, birdies outputed by rfifind are also included.
 
 ### Setup:
 
-Just clone this repository to your prefered place in APSUSE with ```gir clone https://github.com/mcbernadich/multiTRAPUM```
+Just clone this repository to your prefered place in APSUSE with ```git clone https://github.com/mcbernadich/multiTRAPUM```
 The code assumes that you have python, python3, numpy and singularity. If this is the case, you are good to go.
 
 ### Initialization:
@@ -33,7 +33,7 @@ Inside of the repository folder you will see a large bunch of scripts. You only 
 
 will create a directory called ${your_dir}/multiTRAPUM/20211015 and copy all of the scripts inside of it anew. You can also give it an already existing directory.
 
-#### Giving arguments:
+### Giving arguments:
 
 Inside of the working directory created by intialize.sh, you will find a file called ```arguments.txt```. Make sure that you fill each entry accordingly. An example of how should the file look like is the following:
 
@@ -70,7 +70,7 @@ rfifind parameters are, quite literally, the parameters taken by rfifind. If lef
 
 Miscellaneous parameters are those that specify certain running perks. Unless specified otherwise, they go to default.
 
-```cleanup``` can be used to tell ```multiBeam.sh``` to not cleanup the .chop files and the time series and their fourier transforms with ```cleanup: no```. Otherwise, they are just deleted.
+```cleanup``` can be used to tell ```multiBeam.sh``` to not cleanup the .chop files and the time series and their fourier transforms with ```cleanup: no```. Otherwise, they are just deleted as a standard to not clutter memory usage.
 
 ```filtool``` allows you to disble running filtool on the beams before chopping by writing ```cleanup: no```. In general, using filtool is recommended as it removes rednoise from beams and eliminates sharp discontinuities in between beams that result in spurious artifacts deceted by rfifind. However, if your pipeline doesn't use filtool, then perhaps it is better to disable it in ```multiBeam.sh``` too, as these artifact only appear in 1/40 pointings. 
 
