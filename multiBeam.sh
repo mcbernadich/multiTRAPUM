@@ -117,6 +117,7 @@ echo "timesig= ${timesig}"
 echo "freqsig= ${freqsig}"
 echo "chanfrac= ${chanfrac}"
 echo "intfrac= ${intfrac}"
+echo " "
 if test $cleanup && [[ $cleanup == "no" ]]; then
 	echo "'cleanup: no' specified. Therefore, .chop files, time series, and fourier transforms will be kept."
 	delete="yes"
@@ -128,7 +129,7 @@ if test $filtool && [[ $filtool == "no" ]]; then
 	echo "'filtool: no' specified. Therefore, filtool is disabled."
 	filtool="no"
 else
-	echo "'filtool: no' not sepcified. Therefore, filtool remains enabled."
+	echo "'filtool: no' not specified. Therefore, filtool remains enabled."
 	filtool="yes"
 fi
 
@@ -198,7 +199,7 @@ for pointing in ${pointing_list[@]}; do
 				cp $(find ${path}/${pointing}/${args[0]} -name *.fil) .
 				IFS=' ' read -a files <<< $(ls *.fil)
 				IFS='.' read -a name <<< ${files[${half#0}]}
-				echo "Filtools disable. Creating a dummy out of ${files[${half#0}]}."
+				echo "Filtools disabled. Creating a dummy out of ${files[${half#0}]}."
 				mv ${files[${half#0}]} ${name[0]}_01.fil
 			fi
 			${sing_sigpyproc} bash chopCall.sh /data${path}/${pointing}/${args[0]} ${samples} ${args[1]} ${args[2]} ${#beams[@]} ${i} $half
