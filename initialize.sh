@@ -38,3 +38,4 @@ echo "chanfrac:" >> ${dir}/arguments.txt
 echo "intfrac:" >> ${dir}/arguments.txt
 echo "# miscellaneous parameters" >> ${dir}/arguments.txt
 echo "cleanup: yes" >> ${dir}/arguments.txt
+echo "filtool: yes" >> ${dir}/arguments.txt
