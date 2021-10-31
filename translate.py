@@ -1,8 +1,8 @@
 import sys
 read_file=open(sys.argv[1],"r")
 chans = read_file.readline()
-middle = float(sys.argv[2])
-bandwidth = float(sys.argv[3])
+middle = float(sys.argv[2])/1e6
+bandwidth = float(sys.argv[3])/1e6
 bottom= middle - bandwidth/2
 nchan = int(sys.argv[4])
 
