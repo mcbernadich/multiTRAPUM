@@ -16,9 +16,12 @@ def count_channels(mask):
         else:
             total=total+1
     name=np.array(mask.split("_"))
-    pointing=np.flip(np.flip(name,0)[4:],0)[0]
+    pointing_name_ar=np.flip(np.flip(name,0)[4:],0)
     read_file.close()
-    read_file=open(pointing+"_multibeam_birdies_logs.txt","r")
+    pointing_name_str=""
+    for element in pointing_name_ar:
+        pointing_name_ar=pointing_name_str+element+"_"
+    read_file=open(pointing_name_str+"multibeam_birdies_logs.txt","r")
     line=read_file.readline()
     line=read_file.readline()
     line=read_file.readline()
