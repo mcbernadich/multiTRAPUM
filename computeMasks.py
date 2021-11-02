@@ -20,7 +20,7 @@ def count_channels(mask):
     read_file.close()
     pointing_name_str=""
     for element in pointing_name_ar:
-        pointing_name_ar=pointing_name_str+element+"_"
+        pointing_name_str=pointing_name_str+element+"_"
     read_file=open(pointing_name_str+"multibeam_birdies_logs.txt","r")
     line=read_file.readline()
     line=read_file.readline()
@@ -28,7 +28,7 @@ def count_channels(mask):
     line=read_file.readline()
     line=read_file.readline()
     line=line.split(" ")[0]
-    print(pointing+": "+str(100*total/2048)+"% frequency channels, "+line+" Fourier bins.")
+    print(pointing_name_str+": "+str(100*total/2048)+"% frequency channels, "+line+" Fourier bins.")
     return total
 
 files = sorted(glob.glob(str(sys.argv[1])))

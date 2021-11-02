@@ -250,7 +250,7 @@ for pointing in ${pointing_list[@]}; do
 	rfifind_birdies=$(python3 readBirdies.py ${name}_multibeam_rfifind.birdies)
 	multibeam_birdies=$(python3 zapFourier.py ${name} "${name}_Fourier/*_0dm_time_series_red.fft" ${tsamp})
 	if [[ $cleanup == "yes" ]]; then
-		rm ${name}_Fourier/*_0dm_time_series.fft ${name}_Fourier/*_0dm_time_series.dat ${name}_Fourier/*_0dm_time_series.red
+		rm ${name}_Fourier/*_0dm_time_series.fft ${name}_Fourier/*_0dm_time_series.dat ${name}_Fourier/*_0dm_time_series_red.fft
 	fi
 	#Write it all into a sql script.
 	echo 'INSERT INTO rfi_masks (utc, frequency_mask, birdie_list) VALUE ("'${utc_start}'", "'${frequencies}'", "1.65925:0.002,3.31785:0.002,6.6357:0.002,5.55556:0.002,11.1111:0.002,'${rfifind_birdies}','${multibeam_birdies}'");' >> zappingList.sql
