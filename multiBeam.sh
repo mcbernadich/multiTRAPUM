@@ -160,7 +160,7 @@ for pointing in ${pointing_list[@]}; do
 	echo 'Going back to main directory.'
 	cd ..
 	#Loop over the two halves of an observation.
-	for half in $(seq -w 0 $[$( ls ${path}/${pointing}/cfbf00000 | wc -l )-1]); do
+	for half in $(seq -w 0 $[$( ls ${path}/${pointing}/${beams[0]} | wc -l )-1]); do
 		echo ""
 		echo ""
 		echo "Working on the ${half}-th part of pointing ${pointing}"
