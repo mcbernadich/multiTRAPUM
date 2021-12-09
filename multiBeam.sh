@@ -160,12 +160,12 @@ for pointing in ${pointing_list[@]}; do
 	echo 'Going back to main directory.'
 	cd ..
 	#Loop over the two halves of an observation.
+	IFS=',' read -a beams <<< "${rfifind_beams}"
 	for half in $(seq -w 0 $[$( ls ${path}/${pointing}/${beams[0]} | wc -l )-1]); do
 		echo ""
 		echo ""
 		echo "Working on the ${half}-th part of pointing ${pointing}"
 		#Record the satring time, and sample size of every beam and write them in headers.txt
-		IFS=',' read -a beams <<< "${rfifind_beams}"
 		echo ""
 		echo ""
 		echo "Reading the headers of beams ${beams[@]}"
