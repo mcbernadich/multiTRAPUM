@@ -26,7 +26,7 @@ def normalise(series):
 #Run several filtermach sizes across the Fourier series and pick the highest S/N for each bin. 
 def blurSeries(fourierPower):
 	#Convolve the fourier seires with a sinc function of several sizes. i=1 preserves the original fourier series.
-	convolved_array=np.array([np.convolve(fourierPower,np.sinc(np.arange(-1,1+2/(2*i),2/(2*i))[0:2*i+1])),"same")/np.sqrt(2*i-1) for i in range(1,7)])
+	convolved_array=np.array([np.convolve(fourierPower,np.sinc(np.arange(-1,1+2/(2*i),2/(2*i))[0:2*i+1]),"same")/np.sqrt(2*i-1) for i in range(1,7)])
 	#Pick the highest S/N i for ach bin.
 	scrunched_array=np.max(convolved_array,axis=0)
 	return scrunched_array
